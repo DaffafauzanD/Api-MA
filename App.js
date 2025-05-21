@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const { connect } = require("./Db.js");
 const express = require('express')
 const Produksitelur = require("./routes/ProduksiTelurController");
+const Pendapatan = require("./routes/PendapatanController");
 //#endregion imports
 
 //#region conncection
@@ -30,6 +31,8 @@ app.get('/', (req, res) => {
 })
 
 app.use('/Api', Produksitelur);
+
+app.use('/Api', Pendapatan);
 
 
 app.listen(port, () => {
