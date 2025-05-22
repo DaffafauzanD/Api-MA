@@ -5,11 +5,12 @@ const { connect } = require("./Db.js");
 const express = require('express')
 const Produksitelur = require("./routes/ProduksiTelurController");
 const Pendapatan = require("./routes/PendapatanController");
+const pakancontroller = require("./routes/PakanController");
 //#endregion imports
 
 //#region conncection
 const app = express()
-const port = 3000
+const port = 3001
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -33,6 +34,8 @@ app.get('/', (req, res) => {
 app.use('/Api', Produksitelur);
 
 app.use('/Api', Pendapatan);
+
+app.use('/Api', pakancontroller);
 
 
 app.listen(port, () => {
