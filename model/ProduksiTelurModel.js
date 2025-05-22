@@ -99,6 +99,9 @@ async function createProduksiTelur(data) {
       "Tanggal", "Telur_kg"
     ];
     const result = await executeQuery(query, values, paramNames, false);
+
+    await processMonthlyProduction();
+
     return result.recordset[0];
   } catch (error) {
     console.error("Error creating ProduksiTelur:", error);
@@ -122,6 +125,7 @@ async function updateProduksiTelur(id, data) {
       "tanggal", "Telur_kg", "id"
     ];
     const result = await executeQuery(query, values, paramNames, false);
+    await processMonthlyProduction();
     return result.recordset[0];
   } catch (error) {
     console.error("Error updating ProduksiTelur:", error);
@@ -132,12 +136,103 @@ async function updateProduksiTelur(id, data) {
 async function deleteProduksiTelur(id) {
   try {
     const query = `
-      DELETE FROM produksi_telur WHERE id = @id
+      DELETE FROM Produksi_telur_hari WHERE id = @id
     `;
     await executeQuery(query, [id], ["id"], false);
+    await processMonthlyProduction();
     return true;
   } catch (error) {
     console.error("Error deleting ProduksiTelur:", error);
+    throw error;
+  }
+}
+
+async function processMonthlyProduction() {
+  try {
+    // First get all daily data
+    const query = `
+      SELECT 
+        MONTH(Tanggal) as bulan, 
+        YEAR(Tanggal) as tahun,
+        SUM(Telur_kg) as total_telur_kg,
+        COUNT(*) as jumlah_hari,
+        AVG(Telur_kg) as rata_rata_harian
+      FROM produksi_telur_hari 
+      WHERE Tanggal IS NOT NULL
+      GROUP BY MONTH(Tanggal), YEAR(Tanggal)
+    `;
+    
+    const dailyData = await executeQuery(query, [], [], false);
+    
+    // For each month in the result, insert or update the monthly table
+    for (const monthData of dailyData.recordset) {
+      // Check if this month already exists
+      const checkQuery = `
+        SELECT id FROM produksi_telur_bulan 
+        WHERE bulan = @bulan AND tahun = @tahun
+      `;
+      const checkResult = await executeQuery(
+        checkQuery, 
+        [monthData.bulan, monthData.tahun], 
+        ["bulan", "tahun"], 
+        false
+      );
+      
+      if (checkResult.recordset.length > 0) {
+        // Update existing record
+        const updateQuery = `
+          UPDATE produksi_telur_bulan SET
+            total_telur_kg = @total_telur_kg,
+            jumlah_hari = @jumlah_hari,
+            rata_rata_harian = @rata_rata_harian,
+            update_at = GETDATE()
+          OUTPUT INSERTED.*
+          WHERE bulan = @bulan AND tahun = @tahun
+        `;
+        
+        await executeQuery(
+          updateQuery, 
+          [monthData.total_telur_kg, monthData.jumlah_hari, monthData.rata_rata_harian, 
+           monthData.bulan, monthData.tahun],
+          ["total_telur_kg", "jumlah_hari", "rata_rata_harian", "bulan", "tahun"],
+          false
+        );
+      } else {
+        // Insert new record
+        const insertQuery = `
+          INSERT INTO produksi_telur_bulan 
+            (bulan, tahun, total_telur_kg, jumlah_hari, rata_rata_harian, created_at, update_at)
+          OUTPUT INSERTED.*
+          VALUES (@bulan, @tahun, @total_telur_kg, @jumlah_hari, @rata_rata_harian, GETDATE(), GETDATE())
+        `;
+        
+        await executeQuery(
+          insertQuery,
+          [monthData.bulan, monthData.tahun, monthData.total_telur_kg, 
+           monthData.jumlah_hari, monthData.rata_rata_harian],
+          ["bulan", "tahun", "total_telur_kg", "jumlah_hari", "rata_rata_harian"],
+          false
+        );
+      }
+    }
+    
+    // Return the current state of the monthly table
+    const resultQuery = `SELECT * FROM produksi_telur_bulan ORDER BY tahun, bulan`;
+    const result = await executeQuery(resultQuery, [], [], false);
+    return result.recordset;
+  } catch (error) {
+    console.error("Error processing monthly production data:", error);
+    throw error;
+  }
+}
+
+async function getAllMonthlyProduction() {
+  try {
+    const query = `SELECT * FROM produksi_telur_bulan ORDER BY tahun, bulan`;
+    const result = await executeQuery(query, [], [], false);
+    return result.recordset;
+  } catch (error) {
+    console.error("Error fetching monthly production data:", error);
     throw error;
   }
 }
@@ -146,6 +241,8 @@ async function deleteProduksiTelur(id) {
 
 module.exports = {
   getAllProduksiTelur,
+  processMonthlyProduction,
+  getAllMonthlyProduction,
   getProduksiTelurById,
   createProduksiTelur,
   updateProduksiTelur,

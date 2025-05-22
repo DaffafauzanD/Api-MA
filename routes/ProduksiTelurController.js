@@ -144,6 +144,41 @@ router.get("/Produksi/telur/find/:id", async (req, res) => {
   }
 });
 
+router.get("/Produksi/telur/bulan", async (req, res) => {
+  try {
+    const data = await Produksitelur.getAllMonthlyProduction();
+    res.status(200).json({
+      status: 200,
+      message: "Monthly production data retrieved successfully",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: "Failed to retrieve monthly production data",
+      error: error.message,
+    });
+  }
+});
+
+// Process and update monthly data
+router.post("/Produksi/telur/bulan/process", async (req, res) => {
+  try {
+    const data = await Produksitelur.processMonthlyProduction();
+    res.status(200).json({
+      status: 200,
+      message: "Monthly production data processed successfully",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: "Failed to process monthly production data",
+      error: error.message,
+    });
+  }
+});
+
 // router.get("/Produksi/telur/find/:id", async (req, res) => {
 //   const id = req.params.id;
 //   try {

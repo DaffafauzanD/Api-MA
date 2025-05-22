@@ -18,10 +18,20 @@ async function getProduksiTelurById(id) {
     return await Produksitelur.getProduksiTelurById(id);
 }
 
+async function processMonthlyProduction() {
+    return await Produksitelur.processMonthlyProduction();
+}
+
+async function getAllMonthlyProduction() {
+    return await Produksitelur.getAllMonthlyProduction();
+}
+
 module.exports = {
     getAllProduksiTelur,
     getProduksiTelurById,
     createProduksiTelur,
     updateProduksiTelur,
+    processMonthlyProduction,
+    getAllMonthlyProduction,
     deleteProduksiTelur
 };
