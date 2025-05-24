@@ -4,6 +4,10 @@ const ForecastService = require("../services/PakanServices");
 const produksi_telur = require("../model/ProduksiTelurModel");
 const PakanModel = require("../model/PakanModel"); // Assuming you'll create this
 
+//#region forecast
+
+
+
 router.get("/forecast/feed/:field/:window/:periods", async (req, res) => {
   try {
     const field = req.params.field;  // e.g., 'pakan_bulan'
@@ -58,5 +62,42 @@ router.get("/forecast/feed/:field/:window/:periods", async (req, res) => {
     });
   }
 });
+
+//#endregion forecast
+
+router.get("/pakan", async (req, res) => {
+  try {
+    const data = await PakanModel.getAllPakan();
+    res.status(200).json({
+      status: 200,
+      message: "Data retrieved successfully",
+      data: data
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: "Failed to retrieve data",
+      error: error.message
+    });
+  }
+});
+
+router.get("/pakan/bulan", async (req, res) => {
+  try {
+    const data = await PakanModel.getAllPakanMonthly();
+    res.status(200).json({
+      status: 200,
+      message: "Data retrieved successfully",
+      data: data
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: "Failed to retrieve data",
+      error: error.message
+    });
+  }
+});
+
 
 module.exports = router;

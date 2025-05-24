@@ -15,33 +15,6 @@ const {executeQuery, executeTableValuedQuery} = require('../Db');
 //   }
 // }
 
-async function getAllProduksiTelur() {
-  try {
-    const query = `
-      SELECT * FROM produksi_telur_hari
-    `;
-    const result = await executeQuery(query, [], [], false);
-    return result.recordset;
-  } catch (error) {
-    console.error("Error fetching data from ProduksiTelur:", error);
-    throw error;
-  }
-}
-
-async function getProduksiTelurById(id) {
-  try {
-    const query = `
-      SELECT * FROM produksi_telur_hari
-      WHERE Id = @id
-    `;
-    const result = await executeQuery(query, [id], ["Id"], false);
-    return result.recordset[0];
-  } catch (error) {
-    console.error("Error fetching data from ProduksiTelur:", error);
-    throw error;
-  }
-}
-
 // async function getProduksiTelurById(id) {
 //   try {
 //     const query = `
@@ -83,6 +56,35 @@ async function getProduksiTelurById(id) {
 //     throw error;
 //   }
 // }
+
+async function getAllProduksiTelur() {
+  try {
+    const query = `
+      SELECT * FROM produksi_telur_hari
+    `;
+    const result = await executeQuery(query, [], [], false);
+    return result.recordset;
+  } catch (error) {
+    console.error("Error fetching data from ProduksiTelur:", error);
+    throw error;
+  }
+}
+
+async function getProduksiTelurById(id) {
+  try {
+    const query = `
+      SELECT * FROM produksi_telur_hari
+      WHERE Id = @id
+    `;
+    const result = await executeQuery(query, [id], ["Id"], false);
+    return result.recordset[0];
+  } catch (error) {
+    console.error("Error fetching data from ProduksiTelur:", error);
+    throw error;
+  }
+}
+
+
 
 async function createProduksiTelur(data) {
   try {
