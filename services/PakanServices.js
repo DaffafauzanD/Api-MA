@@ -92,12 +92,28 @@ async function processMonthlyProductionPakan() {
   return await PakanModel.processMonthlyProductionPakan
 }
 
+async function createProduksiPakan(data) {
+  return await PakanModel.createProduksiPakan(data);
+}
+
+async function updateProduksiPakan(id, data) {
+  return await PakanModel.updateProduksiPakan(id, data);
+}
+
+async function deleteProduksiPakan(id) {
+  return await PakanModel.deleteProduksiPakan(id);
+}
+
+
 
 
 module.exports = {
   getAllPakan,
   getAllPakanMonthly,
-  processMonthlyProductionPakan
+  processMonthlyProductionPakan,
+  createProduksiPakan,
+  updateProduksiPakan,
+  deleteProduksiPakan
   
   // smaForecast,
   // forecastFeedConsumption

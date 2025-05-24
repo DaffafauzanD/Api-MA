@@ -17,7 +17,7 @@ async function getAllPakan() {
 async function createProduksiPakan(data) {
   try {
     const query = `
-      INSERT INTO Produksi_Pakan_hari 
+      INSERT INTO Pakan_hari 
         (Tanggal,Pakan_kg)
       OUTPUT INSERTED.*
       VALUES (@Tanggal, @Pakan_kg)
@@ -39,6 +39,44 @@ async function createProduksiPakan(data) {
   }
 }
 
+async function updateProduksiPakan(id, data) {
+  try {
+    const query = `
+      UPDATE Pakan_hari SET
+        Tanggal = @tanggal,
+        Pakan_kg = @Pakan_kg
+      OUTPUT INSERTED.*
+      WHERE Id = @id
+    `;
+    const values = [
+      data.Tanggal, data.Pakan_kg, id
+    ];
+    const paramNames = [
+      "tanggal", "Pakan_kg", "id"
+    ];
+    const result = await executeQuery(query, values, paramNames, false);
+    await processMonthlyProductionPakan();
+    return result.recordset[0];
+  } catch (error) {
+    console.error("Error updating ProduksiPakan:", error);
+    throw error;
+  }
+}
+
+async function deleteProduksiPakan(id) {
+  try {
+    const query = `
+      DELETE FROM Pakan_hari WHERE id = @id
+    `;
+    await executeQuery(query, [id], ["id"], false);
+    await processMonthlyProductionPakan();
+    return true;
+  } catch (error) {
+    console.error("Error deleting ProduksiPakan:", error);
+    throw error;
+  }
+}
+
 async function processMonthlyProductionPakan() {
   try {
     // First get all daily data
@@ -46,10 +84,10 @@ async function processMonthlyProductionPakan() {
       SELECT 
         MONTH(Tanggal) as bulan, 
         YEAR(Tanggal) as tahun,
-        SUM(Telur_kg) as total_Pakan_kg,
+        SUM(Pakan_kg) as total_Pakan_kg,
         COUNT(*) as jumlah_hari,
-        AVG(Telur_kg) as rata_rata_harian
-      FROM produksi_Pakan_hari 
+        AVG(Pakan_kg) as rata_rata_harian
+      FROM Pakan_hari 
       WHERE Tanggal IS NOT NULL
       GROUP BY MONTH(Tanggal), YEAR(Tanggal)
     `;
@@ -74,7 +112,7 @@ async function processMonthlyProductionPakan() {
         // Update existing record
         const updateQuery = `
           UPDATE produksi_Pakan_bulan SET
-            total_telur_kg = @total_Pakan_kg,
+            total_Pakan_kg = @total_Pakan_kg,
             jumlah_hari = @jumlah_hari,
             rata_rata_harian = @rata_rata_harian,
             update_at = GETDATE()
@@ -84,9 +122,9 @@ async function processMonthlyProductionPakan() {
         
         await executeQuery(
           updateQuery, 
-          [monthData.total_telur_kg, monthData.jumlah_hari, monthData.rata_rata_harian, 
+          [monthData.total_Pakan_kg, monthData.jumlah_hari, monthData.rata_rata_harian, 
            monthData.bulan, monthData.tahun],
-          ["total_telur_kg", "jumlah_hari", "rata_rata_harian", "bulan", "tahun"],
+          ["total_Pakan_kg", "jumlah_hari", "rata_rata_harian", "bulan", "tahun"],
           false
         );
       } else {
@@ -95,7 +133,7 @@ async function processMonthlyProductionPakan() {
           INSERT INTO produksi_Pakan_bulan 
             (bulan, tahun, total_Pakan_kg, jumlah_hari, rata_rata_harian, created_at, update_at)
           OUTPUT INSERTED.*
-          VALUES (@bulan, @tahun, @total_telur_kg, @jumlah_hari, @rata_rata_harian, GETDATE(), GETDATE())
+          VALUES (@bulan, @tahun, @total_Pakan_kg, @jumlah_hari, @rata_rata_harian, GETDATE(), GETDATE())
         `;
         
         await executeQuery(
@@ -139,5 +177,8 @@ async function getAllPakanMonthly() {
 module.exports = {
   getAllPakan,
   getAllPakanMonthly,
-  processMonthlyProductionPakan
+  processMonthlyProductionPakan,
+  createProduksiPakan,
+  updateProduksiPakan,
+  deleteProduksiPakan
 };
