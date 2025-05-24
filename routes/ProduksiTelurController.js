@@ -179,6 +179,42 @@ router.post("/Produksi/telur/bulan/process", async (req, res) => {
   }
 });
 
+router.post("/Produksi/telur/add/bulk", async (req, res) => {
+  try {
+    // Check if the request body is an array
+    if (!Array.isArray(req.body)) {
+      return res.status(400).json({
+        status: 400,
+        message: "Input must be an array of records",
+      });
+    }
+    
+    // Validate each item in the array
+    for (let i = 0; i < req.body.length; i++) {
+      const item = req.body[i];
+      if (!item.Tanggal || !item.Telur_kg) {
+        return res.status(400).json({
+          status: 400,
+          message: `Record at index ${i} is missing required fields (Tanggal or Telur_kg)`,
+        });
+      }
+    }
+    
+    const data = await Produksitelur.createBulkProduksiTelur(req.body);
+    res.status(201).json({
+      status: 201,
+      message: `Successfully created ${data.length} records`,
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: "Failed to create bulk data",
+      error: error.message,
+    });
+  }
+});
+
 // router.get("/Produksi/telur/find/:id", async (req, res) => {
 //   const id = req.params.id;
 //   try {

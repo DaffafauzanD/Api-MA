@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const ForecastService = require("../services/PakanServices");
+const produksi_telur = require("../model/ProduksiTelurModel");
 const PakanModel = require("../model/PakanModel"); // Assuming you'll create this
 
 router.get("/forecast/feed/:field/:window/:periods", async (req, res) => {
@@ -24,15 +25,19 @@ router.get("/forecast/feed/:field/:window/:periods", async (req, res) => {
       });
     }
     
+    
     // Get feed consumption data
     const feedData = await PakanModel.getAllPakan();
+
+    const feedDataTelur = await produksi_telur.getAllMonthlyProduction();
     
     // Sort data chronologically
     feedData.sort((a, b) => a.no - b.no);
+    feedDataTelur.sort((a, b) => a.no - b.no);
     
     // Generate forecast
-    const result = ForecastService.forecastFeedConsumption(feedData, field, window, periods);
-    
+    const resultpakan = ForecastService.forecastFeedConsumption(feedData, field, window, periods);
+    const resultpakanTelur = ForecastService.forecastFeedConsumption(feedDataTelur, field, window, periods);
     res.status(200).json({
       status: 200,
       message: "Forecast generated successfully",
@@ -41,7 +46,9 @@ router.get("/forecast/feed/:field/:window/:periods", async (req, res) => {
         periods: periods,
         field: field
       },
-      data: result
+      data_pakan: resultpakan,
+      data_pakan_telur: resultpakanTelur
+
     });
   } catch (error) {
     res.status(500).json({

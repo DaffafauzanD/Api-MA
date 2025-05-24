@@ -14,8 +14,24 @@ async function getAllPakan() {
   }
 }
 
+async function getAllPakanMonthly() {
+  try {
+    const query = `
+      SELECT * FROM produksi_Pakan_bulan
+      ORDER BY tahun, bulan
+    `;
+    const result = await executeQuery(query, [], [], false);
+    return result.recordset;
+  } catch (error) {
+    console.error("Error fetching data from produksi_pakan_bulan:", error);
+    throw error;
+  }
+}
+
+
 // Add other CRUD operations as needed
 
 module.exports = {
   getAllPakan,
+  getAllPakanMonthly
 };

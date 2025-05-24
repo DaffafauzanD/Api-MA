@@ -1,4 +1,4 @@
-const {executeQuery} = require('../Db');
+const {executeQuery, executeTableValuedQuery} = require('../Db');
 
 // async function getAllProduksiTelur() {
 //   try {
@@ -237,6 +237,59 @@ async function getAllMonthlyProduction() {
   }
 }
 
+async function createBulkProduksiTelur(dataArray) {
+  try {
+    // Import the sql module directly
+    const { sql, executeQuery } = require('../Db');
+    
+    // Connect using sql.connect() without passing config again
+    const pool = await sql.connect();
+    const transaction = new sql.Transaction(pool);
+    
+    try {
+      // Start transaction
+      await transaction.begin();
+      
+      const results = [];
+      
+      // Process each item in the array
+      for (const data of dataArray) {
+        const request = new sql.Request(transaction);
+        request.input('Tanggal', sql.Date, new Date(data.Tanggal));
+        request.input('Telur_kg', sql.Decimal(10, 2), parseFloat(data.Telur_kg));
+        
+        const query = `
+          INSERT INTO Produksi_telur_hari (Tanggal, Telur_kg)
+          OUTPUT INSERTED.*
+          VALUES (@Tanggal, @Telur_kg)
+        `;
+        
+        const result = await request.query(query);
+        results.push(...result.recordset);
+      }
+      
+      // Commit transaction
+      await transaction.commit();
+      
+      // Process monthly data after all inserts
+      await processMonthlyProduction();
+      
+      return results;
+    } catch (error) {
+      // If any error occurs, rollback the transaction
+      await transaction.rollback();
+      console.error("Transaction error:", error);
+      throw error;
+    } finally {
+      // Make sure to close the pool to prevent connection leaks
+      pool.close();
+    }
+  } catch (error) {
+    console.error("Error in bulk insert:", error);
+    throw error;
+  }
+}
+
 
 
 module.exports = {
@@ -246,5 +299,6 @@ module.exports = {
   getProduksiTelurById,
   createProduksiTelur,
   updateProduksiTelur,
-  deleteProduksiTelur
+  deleteProduksiTelur,
+  createBulkProduksiTelur
 };

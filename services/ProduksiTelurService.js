@@ -26,6 +26,10 @@ async function getAllMonthlyProduction() {
     return await Produksitelur.getAllMonthlyProduction();
 }
 
+async function createBulkProduksiTelur(dataArray) {
+    return await Produksitelur.createBulkProduksiTelur(dataArray);
+}
+
 module.exports = {
     getAllProduksiTelur,
     getProduksiTelurById,
@@ -33,5 +37,6 @@ module.exports = {
     updateProduksiTelur,
     processMonthlyProduction,
     getAllMonthlyProduction,
-    deleteProduksiTelur
+    deleteProduksiTelur,
+    createBulkProduksiTelur
 };

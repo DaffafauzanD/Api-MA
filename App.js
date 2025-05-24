@@ -6,6 +6,7 @@ const express = require('express')
 const Produksitelur = require("./routes/ProduksiTelurController");
 const Pendapatan = require("./routes/PendapatanController");
 const pakancontroller = require("./routes/PakanController");
+const SmovingAverage = require("./routes/SMovingAverageController");
 //#endregion imports
 
 //#region conncection
@@ -36,6 +37,8 @@ app.use('/Api', Produksitelur);
 app.use('/Api', Pendapatan);
 
 app.use('/Api', pakancontroller);
+
+app.use('/Api/v1', SmovingAverage);
 
 
 app.listen(port, () => {
