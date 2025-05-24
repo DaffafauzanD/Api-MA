@@ -105,6 +105,11 @@ async function deleteProduksiPakan(id) {
 }
 
 
+async function createBulkProduksiPakan(dataArray) {
+    return await Produksitelur.createBulkProduksiPakan(dataArray);
+}
+
+
 
 
 module.exports = {
@@ -113,7 +118,10 @@ module.exports = {
   processMonthlyProductionPakan,
   createProduksiPakan,
   updateProduksiPakan,
-  deleteProduksiPakan
+  deleteProduksiPakan,
+  createBulkProduksiPakan
+  
+  // Uncomment the following lines if you want to use the SMA forecast functionality
   
   // smaForecast,
   // forecastFeedConsumption

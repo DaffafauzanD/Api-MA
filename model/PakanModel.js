@@ -147,7 +147,7 @@ async function processMonthlyProductionPakan() {
     }
     
     // Return the current state of the monthly table
-    const resultQuery = `SELECT * FROM produksi_telur_bulan ORDER BY tahun, bulan`;
+    const resultQuery = `SELECT * FROM produksi_Pakan_bulan ORDER BY tahun, bulan`;
     const result = await executeQuery(resultQuery, [], [], false);
     return result.recordset;
   } catch (error) {
@@ -171,6 +171,63 @@ async function getAllPakanMonthly() {
   }
 }
 
+async function createBulkProduksiPakan(dataArray) {
+  try {
+    // Import sql directly from the Db module without destructuring
+    const sql = require('../Db').sql;
+    
+    // Create a new pool connection
+    const pool = await sql.connect();
+    const transaction = new sql.Transaction(pool);
+    
+    try {
+      // Start transaction
+      await transaction.begin();
+      
+      const results = [];
+      
+      // Process each item in the array
+      for (const data of dataArray) {
+        const request = new sql.Request(transaction);
+        request.input('Tanggal', sql.Date, new Date(data.Tanggal));
+        request.input('Pakan_kg', sql.Decimal(10, 2), parseFloat(data.Pakan_kg));
+        
+        const query = `
+          INSERT INTO Pakan_hari (Tanggal, Pakan_kg)
+          OUTPUT INSERTED.*
+          VALUES (@Tanggal, @Pakan_kg)
+        `;
+        
+        const result = await request.query(query);
+        results.push(...result.recordset);
+      }
+      
+      // Commit transaction
+      await transaction.commit();
+      
+      // Process monthly data after all inserts
+      await processMonthlyProductionPakan();
+      
+      return results;
+    } catch (error) {
+      // If any error occurs, rollback the transaction
+      if (transaction._aborted) {
+        console.error("Transaction was aborted");
+      } else {
+        await transaction.rollback();
+        console.error("Transaction rolled back due to error:", error);
+      }
+      throw error;
+    } finally {
+      // Make sure to close the pool to prevent connection leaks
+      pool.close();
+    }
+  } catch (error) {
+    console.error("Error in bulk insert:", error);
+    throw error;
+  }
+}
+
 
 // Add other CRUD operations as needed
 
@@ -180,5 +237,6 @@ module.exports = {
   processMonthlyProductionPakan,
   createProduksiPakan,
   updateProduksiPakan,
-  deleteProduksiPakan
+  deleteProduksiPakan,
+  createBulkProduksiPakan
 };
