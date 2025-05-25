@@ -98,7 +98,7 @@ async function processMonthlyProductionPakan() {
     for (const monthData of dailyData.recordset) {
       // Check if this month already exists
       const checkQuery = `
-        SELECT id FROM produksi_Pakan_bulan 
+        SELECT id FROM Pakan_bulan 
         WHERE bulan = @bulan AND tahun = @tahun
       `;
       const checkResult = await executeQuery(
@@ -111,7 +111,7 @@ async function processMonthlyProductionPakan() {
       if (checkResult.recordset.length > 0) {
         // Update existing record
         const updateQuery = `
-          UPDATE produksi_Pakan_bulan SET
+          UPDATE Pakan_bulan SET
             total_Pakan_kg = @total_Pakan_kg,
             jumlah_hari = @jumlah_hari,
             rata_rata_harian = @rata_rata_harian,
@@ -130,7 +130,7 @@ async function processMonthlyProductionPakan() {
       } else {
         // Insert new record
         const insertQuery = `
-          INSERT INTO produksi_Pakan_bulan 
+          INSERT INTO Pakan_bulan 
             (bulan, tahun, total_Pakan_kg, jumlah_hari, rata_rata_harian, created_at, update_at)
           OUTPUT INSERTED.*
           VALUES (@bulan, @tahun, @total_Pakan_kg, @jumlah_hari, @rata_rata_harian, GETDATE(), GETDATE())
@@ -147,7 +147,7 @@ async function processMonthlyProductionPakan() {
     }
     
     // Return the current state of the monthly table
-    const resultQuery = `SELECT * FROM produksi_Pakan_bulan ORDER BY tahun, bulan`;
+    const resultQuery = `SELECT * FROM Pakan_bulan ORDER BY tahun, bulan`;
     const result = await executeQuery(resultQuery, [], [], false);
     return result.recordset;
   } catch (error) {
@@ -159,14 +159,11 @@ async function processMonthlyProductionPakan() {
 
 async function getAllPakanMonthly() {
   try {
-    const query = `
-      SELECT * FROM produksi_Pakan_bulan
-      ORDER BY tahun, bulan
-    `;
+    const query = `SELECT * FROM Pakan_bulan ORDER BY tahun, bulan`;
     const result = await executeQuery(query, [], [], false);
     return result.recordset;
   } catch (error) {
-    console.error("Error fetching data from produksi_pakan_bulan:", error);
+    console.error("Error fetching data from pakan_bulan:", error);
     throw error;
   }
 }
