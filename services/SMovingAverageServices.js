@@ -10,18 +10,18 @@ function smaForecast(data, window, forecastPeriods) {
   if (data.length < window) {
     throw new Error(`Not enough data points. Need at least ${window} points.`);
   }
-  
+
   const forecast = [];
-  
+
   // Generate forecast for each period
   for (let i = 0; i < forecastPeriods; i++) {
     // For each forecast period, use the last 'window' actual values or forecasted values
     const startIdx = data.length + i - window;
     const endIdx = data.length + i;
-    
+
     // Collect the values to use for this forecast point
     const valuesToUse = [];
-    
+
     for (let j = startIdx; j < endIdx; j++) {
       if (j < data.length) {
         // Use actual data
@@ -31,15 +31,15 @@ function smaForecast(data, window, forecastPeriods) {
         valuesToUse.push(forecast[j - data.length]);
       }
     }
-    
+
     // Calculate the moving average
     const sum = valuesToUse.reduce((acc, val) => acc + val, 0);
     const average = sum / window;
-    
+
     // Add to forecast
     forecast.push(Math.round(average));
   }
-  
+
   return forecast;
 }
 
@@ -53,16 +53,16 @@ function smaForecast(data, window, forecastPeriods) {
  */
 function forecastMonthlyProduction(monthlyData, field, window, periods) {
   // Extract the field values
-  const values = monthlyData.map(item => item[field]);
-  
+  const values = monthlyData.map((item) => item[field]);
+
   // Calculate forecast
   const forecastValues = smaForecast(values, window, periods);
-  
+
   // Get the last month and year from the data
   const lastRecord = monthlyData[monthlyData.length - 1];
   let nextMonth = lastRecord.bulan;
   let nextYear = lastRecord.tahun;
-  
+
   // Format the forecast results
   const forecast = forecastValues.map((value, index) => {
     // Increment month and adjust year if needed
@@ -71,18 +71,18 @@ function forecastMonthlyProduction(monthlyData, field, window, periods) {
       nextMonth = 1;
       nextYear++;
     }
-    
+
     return {
       bulan: nextMonth,
       tahun: nextYear,
       [field]: value,
-      is_forecast: true
+      is_forecast: true,
     };
   });
-  
+
   return {
     actual: monthlyData,
-    forecast: forecast
+    forecast: forecast,
   };
 }
 
@@ -96,24 +96,24 @@ function forecastMonthlyProduction(monthlyData, field, window, periods) {
  */
 function forecastMultipleDatasets(datasets, fields, window, periods) {
   const results = {};
-  
+
   // Process each dataset
   for (const key in datasets) {
     if (datasets.hasOwnProperty(key) && fields.hasOwnProperty(key)) {
       results[key] = forecastMonthlyProduction(
-        datasets[key], 
-        fields[key], 
-        window, 
+        datasets[key],
+        fields[key],
+        window,
         periods
       );
     }
   }
-  
+
   return results;
 }
 
 module.exports = {
   smaForecast,
   forecastMonthlyProduction,
-  forecastMultipleDatasets
+  forecastMultipleDatasets,
 };

@@ -3,7 +3,7 @@ const sql = require("mssql");
 const config = {
   server: "Localhost",
   database: "MA_Databases",
-  user: "ta",
+  user: "qq",
   password: "0895YEET!@#$4215",
   options: {
     trustedConnection: true,
@@ -135,12 +135,12 @@ module.exports = {
 //     // For MySQL, we use ? placeholders directly in the query
 //     // No need for named parameters like in MSSQL
 //     let sqlQuery = query;
-    
+
 //     // If it's a stored procedure, format it appropriately
 //     if (isStoredProcedure) {
 //       sqlQuery = `CALL ${query}(${values.map(() => '?').join(',')})`;
 //     }
-    
+
 //     // Log for debugging
 //     values.forEach((val, index) => {
 //       if (typeof val === "undefined") {
@@ -150,7 +150,7 @@ module.exports = {
 
 //     // Execute the query
 //     const [rows, fields] = await pool.execute(sqlQuery, values);
-    
+
 //     return {
 //       recordset: rows,
 //       rowsAffected: rows.affectedRows || rows.length
@@ -167,31 +167,31 @@ module.exports = {
 //   try {
 //     // For bulk inserts in MySQL, you'd typically use:
 //     // INSERT INTO table (col1, col2) VALUES (?, ?), (?, ?)...
-    
+
 //     // This is a simplified version - you'd need to adapt to your specific needs
 //     const connection = await pool.getConnection();
-    
+
 //     try {
 //       // Start transaction for bulk operations
 //       await connection.beginTransaction();
-      
+
 //       // Transform your table data into MySQL format
 //       let result;
 //       if (Array.isArray(tableData.rows)) {
 //         // Assuming tableData.rows contains the rows to insert
-//         const placeholders = tableData.rows.map(() => 
+//         const placeholders = tableData.rows.map(() =>
 //           `(${tableData.columns.map(() => '?').join(',')})`
 //         ).join(',');
-        
-//         const flatValues = tableData.rows.flatMap(row => 
+
+//         const flatValues = tableData.rows.flatMap(row =>
 //           tableData.columns.map(col => row[col])
 //         );
-        
+
 //         const sql = `INSERT INTO ${paramName} (${tableData.columns.join(',')}) VALUES ${placeholders}`;
-        
+
 //         [result] = await connection.execute(sql, flatValues);
 //       }
-      
+
 //       await connection.commit();
 //       return { recordset: [], rowsAffected: result ? result.affectedRows : 0 };
 //     } catch (err) {
