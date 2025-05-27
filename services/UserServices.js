@@ -52,8 +52,32 @@ async function getUserProfile(userId) {
   return await UserModel.findUserById(userId);
 }
 
+async function changePassword(userId, currentPassword, newPassword) {
+  // Find user by ID
+  const user = await UserModel.findUserById(userId);
+  
+  if (!user) {
+    throw new Error('User not found');
+  }
+  
+  // Get complete user data to access password hash
+  const fullUser = await UserModel.findUserByUsername(user.username);
+  
+  // Verify current password
+  const isMatch = await bcrypt.compare(currentPassword, fullUser.password_hash);
+  
+  if (!isMatch) {
+    throw new Error('Current password is incorrect');
+  }
+  
+  // Change password
+  return await UserModel.changePassword(userId, newPassword);
+}
+
+
 module.exports = {
   login,
   register,
-  getUserProfile
+  getUserProfile,
+    changePassword
 };

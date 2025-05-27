@@ -99,4 +99,94 @@ router.post('/logout', (req, res) => {
   });
 });
 
+// Add this route to your UserController.js
+router.put('/change_password', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+    
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Current password and new password are required'
+      });
+    }
+    
+    // Password validation (you may want to strengthen this)
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        status: 400,
+        message: 'New password must be at least 6 characters long'
+      });
+    }
+    
+    // Change password
+    const updatedUser = await UserService.changePassword(userId, currentPassword, newPassword);
+    
+    res.status(200).json({
+      status: 200,
+      message: 'Password changed successfully',
+      data: {
+        user: updatedUser
+      }
+    });
+  } catch (error) {
+    // Determine appropriate status code based on error
+    let statusCode = 500;
+    if (error.message === 'User not found') {
+      statusCode = 404;
+    } else if (error.message === 'Current password is incorrect') {
+      statusCode = 401;
+    }
+    
+    res.status(statusCode).json({
+      status: statusCode,
+      message: 'Failed to change password',
+      error: error.message
+    });
+  }
+});
+
+// For admin-only password reset (no current password required)
+router.put('/admin/reset-password/:userId', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { newPassword } = req.body;
+    
+    // Validate input
+    if (!newPassword) {
+      return res.status(400).json({
+        status: 400,
+        message: 'New password is required'
+      });
+    }
+    
+    // Password validation
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        status: 400,
+        message: 'New password must be at least 6 characters long'
+      });
+    }
+    
+    // Reset password (admin bypass - no current password check)
+    const updatedUser = await UserModel.changePassword(userId, newPassword);
+    
+    res.status(200).json({
+      status: 200,
+      message: 'Password reset successfully',
+      data: {
+        user: updatedUser
+      }
+    });
+  } catch (error) {
+    res.status(error.message === 'User not found' ? 404 : 500).json({
+      status: error.message === 'User not found' ? 404 : 500,
+      message: 'Failed to reset password',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

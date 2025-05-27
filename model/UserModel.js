@@ -17,7 +17,9 @@ async function findUserByUsername(username) {
 async function findUserById(id) {
   try {
     const query = `
-      SELECT id, username, created_at FROM user WHERE id = @id
+      SELECT id, username, password_hash, created_at, is_admin, email, fullname
+    FROM MA_Databases.dbo.[user] WHERE id = 10;
+
     `;
     const result = await executeQuery(query, [id], ["id"], false);
     return result.recordset[0];
@@ -61,8 +63,35 @@ async function createUser(userData) {
   }
 }
 
+async function changePassword(userId, newPassword) {
+  try {
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    const query = `
+      UPDATE MA_Databases.dbo.[user]
+      SET password_hash = @newPassword
+      OUTPUT INSERTED.id, INSERTED.username, INSERTED.created_at, INSERTED.is_admin, INSERTED.email, INSERTED.fullname
+      WHERE id = @userId
+    `;
+    
+    const result = await executeQuery(query, [hashedPassword, userId], ["newPassword", "userId"], false);
+    
+    if (result.recordset.length === 0) {
+      throw new Error("User not found");
+    }
+    
+    return result.recordset[0];
+  } catch (error) {
+    console.error("Error changing password:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   findUserByUsername,
   findUserById,
-  createUser
+  createUser,
+  changePassword
 };
