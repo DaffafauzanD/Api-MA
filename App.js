@@ -7,11 +7,14 @@ const Produksitelur = require("./routes/ProduksiTelurController");
 const Pendapatan = require("./routes/PendapatanController");
 const pakancontroller = require("./routes/PakanController");
 const SmovingAverage = require("./routes/SMovingAverageController");
+const { authMiddleware, adminOnly } = require('./middleware/auth/MiddlewareUser');
+
+const authController = require("./routes/UserController");
 //#endregion imports
 
 //#region conncection
 const app = express()
-const port = 3001
+const port = process.env.PORT || 3001;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -39,6 +42,10 @@ app.use('/Api', Pendapatan);
 app.use('/Api', pakancontroller);
 
 app.use('/Api/v1', SmovingAverage);
+
+app.use('/Api/auth', authController);
+
+
 
 
 app.listen(port, () => {
