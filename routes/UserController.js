@@ -60,7 +60,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Get user profile (protected route)
-router.get('/profile', authMiddleware, async (req, res) => {
+router.get('/profile', authMiddleware, adminOnly, async (req, res) => {
   try {
     const userId = req.user.id;
     const userProfile = await UserService.getUserProfile(userId);

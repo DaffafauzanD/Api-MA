@@ -18,7 +18,7 @@ async function findUserById(id) {
   try {
     const query = `
       SELECT id, username, password_hash, created_at, is_admin, email, fullname
-    FROM MA_Databases.dbo.[user] WHERE id = 10;
+    FROM MA_Databases.dbo.[user] WHERE id = @id;
 
     `;
     const result = await executeQuery(query, [id], ["id"], false);
