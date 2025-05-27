@@ -9,6 +9,8 @@ router.post('/register', async (req, res) => {
     const userData = {
       username: req.body.username,
       password: req.body.password,
+      email: req.body.email,
+      fullname: req.body.fullname,
       is_admin: true // Always create as admin
     };
     
