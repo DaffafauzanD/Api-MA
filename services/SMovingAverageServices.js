@@ -1,43 +1,23 @@
 /**
  * Calculate Simple Moving Average forecast
- * @param {Array} data - Time series data array
- * @param {Number} window - Window size for moving average
- * @param {Number} forecastPeriods - Number of periods to forecast
- * @returns {Array} - Forecast values for requested periods
+ * @param {Array} data - Time series data array (actual data for 12 months)
+ * @param {Number} window - Window size for moving average (e.g., 4 months)
+ * @returns {Array} - Forecast values for each month starting from the 5th month
  */
-function smaForecast(data, window, forecastPeriods) {
-  // Validate input
-  if (data.length < window) {
-    throw new Error(`Not enough data points. Need at least ${window} points.`);
-  }
-
+function smaForecast(data, window) {
   const forecast = [];
 
-  // Generate forecast for each period
-  for (let i = 0; i < forecastPeriods; i++) {
-    // For each forecast period, use the last 'window' actual values or forecasted values
-    const startIdx = data.length + i - window;
-    const endIdx = data.length + i;
-
-    // Collect the values to use for this forecast point
-    const valuesToUse = [];
-
-    for (let j = startIdx; j < endIdx; j++) {
-      if (j < data.length) {
-        // Use actual data
-        valuesToUse.push(data[j]);
-      } else {
-        // Use previously forecasted data
-        valuesToUse.push(forecast[j - data.length]);
-      }
-    }
+  // Iterate through the data starting from the `window` index
+  for (let i = window; i < data.length; i++) {
+    // Get the last `window` months of data
+    const windowData = data.slice(i - window, i);
 
     // Calculate the moving average
-    const sum = valuesToUse.reduce((acc, val) => acc + val, 0);
+    const sum = windowData.reduce((acc, val) => acc + val, 0);
     const average = sum / window;
 
-    // Add to forecast
-    forecast.push(Math.round(average));
+    // Add the forecasted value
+    forecast.push(parseFloat(average.toFixed(2))); // Round to 2 decimal places
   }
 
   return forecast;
@@ -48,41 +28,73 @@ function smaForecast(data, window, forecastPeriods) {
  * @param {Array} monthlyData - Array of monthly data objects
  * @param {String} field - The field to forecast (e.g., 'total_telur_kg')
  * @param {Number} window - The window size for moving average
- * @param {Number} periods - Number of periods to forecast
  * @returns {Object} - Original data and forecast values
  */
-function forecastMonthlyProduction(monthlyData, field, window, periods) {
-  // Extract the field values
-  const values = monthlyData.map((item) => item[field]);
-
-  // Calculate forecast
-  const forecastValues = smaForecast(values, window, periods);
-
-  // Get the last month and year from the data
-  const lastRecord = monthlyData[monthlyData.length - 1];
-  let nextMonth = lastRecord.bulan;
-  let nextYear = lastRecord.tahun;
-
-  // Format the forecast results
-  const forecast = forecastValues.map((value, index) => {
-    // Increment month and adjust year if needed
+function forecastMonthlyProduction(monthlyData, field, window) {
+  // Extract the field values for forecast calculation
+  const values = monthlyData.map(item => item[field]);
+  
+  // Create forecast for all months starting from the window-th month
+  const forecast = [];
+  
+  // For each month starting from the window-th month
+  for (let i = window; i <= monthlyData.length; i++) {
+    // Get the data for the current month
+    const currentMonthData = monthlyData[i - 1];
+    
+    // Get the previous window months of data
+    const previousWindowData = values.slice(i - window, i);
+    
+    // Calculate the moving average
+    const sum = previousWindowData.reduce((acc, val) => acc + val, 0);
+    const average = sum / window;
+    const roundedAverage = parseFloat(average.toFixed(2));
+    
+    // Add forecast data point
+    forecast.push({
+      bulan: currentMonthData.bulan,
+      tahun: currentMonthData.tahun,
+      [field]: roundedAverage,
+      is_forecast: true
+    });
+  }
+  
+  // Also forecast future months that don't have actual data
+  // Get the last month's data
+  const lastActualData = monthlyData[monthlyData.length - 1];
+  let nextMonth = lastActualData.bulan;
+  let nextYear = lastActualData.tahun;
+  
+  // Continue forecasting for future months (8-12)
+  const combinedValues = [...values]; // Copy actual values
+  
+  // Forecast until month 12
+  while (nextMonth < 12) {
     nextMonth++;
-    if (nextMonth > 12) {
-      nextMonth = 1;
-      nextYear++;
-    }
-
-    return {
+    
+    // Get the most recent window-sized data
+    const recentData = combinedValues.slice(-window);
+    
+    // Calculate moving average
+    const sum = recentData.reduce((acc, val) => acc + val, 0);
+    const average = sum / window;
+    const roundedAverage = parseFloat(average.toFixed(2));
+    
+    // Add to forecast
+    forecast.push({
       bulan: nextMonth,
       tahun: nextYear,
-      [field]: value,
-      is_forecast: true,
-    };
-  });
-
+      [field]: roundedAverage,
+      is_forecast: true
+    });
+    
+    // Add to combined values for next calculation
+    combinedValues.push(roundedAverage);
+  }
+  
   return {
     actual: monthlyData,
-    forecast: forecast,
+    forecast: forecast
   };
 }
 
@@ -96,24 +108,24 @@ function forecastMonthlyProduction(monthlyData, field, window, periods) {
  */
 function forecastMultipleDatasets(datasets, fields, window, periods) {
   const results = {};
-
+  
   // Process each dataset
   for (const key in datasets) {
     if (datasets.hasOwnProperty(key) && fields.hasOwnProperty(key)) {
       results[key] = forecastMonthlyProduction(
-        datasets[key],
-        fields[key],
-        window,
+        datasets[key], 
+        fields[key], 
+        window, 
         periods
       );
     }
   }
-
+  
   return results;
 }
 
 module.exports = {
   smaForecast,
   forecastMonthlyProduction,
-  forecastMultipleDatasets,
+  forecastMultipleDatasets
 };

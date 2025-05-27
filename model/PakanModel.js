@@ -1,4 +1,4 @@
-const { executeQuery } = require("../Db");
+const { executeQuery } = require('../Db');
 
 async function getAllPakan() {
   try {
@@ -22,8 +22,12 @@ async function createProduksiPakan(data) {
       OUTPUT INSERTED.*
       VALUES (@Tanggal, @Pakan_kg)
     `;
-    const values = [data.Tanggal, data.Pakan_kg];
-    const paramNames = ["Tanggal", "Pakan_kg"];
+    const values = [
+      data.Tanggal, data.Pakan_kg
+    ];
+    const paramNames = [
+      "Tanggal", "Pakan_kg"
+    ];
     const result = await executeQuery(query, values, paramNames, false);
 
     await processMonthlyProductionPakan();
@@ -44,8 +48,12 @@ async function updateProduksiPakan(id, data) {
       OUTPUT INSERTED.*
       WHERE Id = @id
     `;
-    const values = [data.Tanggal, data.Pakan_kg, id];
-    const paramNames = ["tanggal", "Pakan_kg", "id"];
+    const values = [
+      data.Tanggal, data.Pakan_kg, id
+    ];
+    const paramNames = [
+      "tanggal", "Pakan_kg", "id"
+    ];
     const result = await executeQuery(query, values, paramNames, false);
     await processMonthlyProductionPakan();
     return result.recordset[0];
@@ -83,9 +91,9 @@ async function processMonthlyProductionPakan() {
       WHERE Tanggal IS NOT NULL
       GROUP BY MONTH(Tanggal), YEAR(Tanggal)
     `;
-
+    
     const dailyData = await executeQuery(query, [], [], false);
-
+    
     // For each month in the result, insert or update the monthly table
     for (const monthData of dailyData.recordset) {
       // Check if this month already exists
@@ -94,12 +102,12 @@ async function processMonthlyProductionPakan() {
         WHERE bulan = @bulan AND tahun = @tahun
       `;
       const checkResult = await executeQuery(
-        checkQuery,
-        [monthData.bulan, monthData.tahun],
-        ["bulan", "tahun"],
+        checkQuery, 
+        [monthData.bulan, monthData.tahun], 
+        ["bulan", "tahun"], 
         false
       );
-
+      
       if (checkResult.recordset.length > 0) {
         // Update existing record
         const updateQuery = `
@@ -111,23 +119,12 @@ async function processMonthlyProductionPakan() {
           OUTPUT INSERTED.*
           WHERE bulan = @bulan AND tahun = @tahun
         `;
-
+        
         await executeQuery(
-          updateQuery,
-          [
-            monthData.total_Pakan_kg,
-            monthData.jumlah_hari,
-            monthData.rata_rata_harian,
-            monthData.bulan,
-            monthData.tahun,
-          ],
-          [
-            "total_Pakan_kg",
-            "jumlah_hari",
-            "rata_rata_harian",
-            "bulan",
-            "tahun",
-          ],
+          updateQuery, 
+          [monthData.total_Pakan_kg, monthData.jumlah_hari, monthData.rata_rata_harian, 
+           monthData.bulan, monthData.tahun],
+          ["total_Pakan_kg", "jumlah_hari", "rata_rata_harian", "bulan", "tahun"],
           false
         );
       } else {
@@ -138,28 +135,17 @@ async function processMonthlyProductionPakan() {
           OUTPUT INSERTED.*
           VALUES (@bulan, @tahun, @total_Pakan_kg, @jumlah_hari, @rata_rata_harian, GETDATE(), GETDATE())
         `;
-
+        
         await executeQuery(
           insertQuery,
-          [
-            monthData.bulan,
-            monthData.tahun,
-            monthData.total_Pakan_kg,
-            monthData.jumlah_hari,
-            monthData.rata_rata_harian,
-          ],
-          [
-            "bulan",
-            "tahun",
-            "total_Pakan_kg",
-            "jumlah_hari",
-            "rata_rata_harian",
-          ],
+          [monthData.bulan, monthData.tahun, monthData.total_Pakan_kg, 
+           monthData.jumlah_hari, monthData.rata_rata_harian],
+          ["bulan", "tahun", "total_Pakan_kg", "jumlah_hari", "rata_rata_harian"],
           false
         );
       }
     }
-
+    
     // Return the current state of the monthly table
     const resultQuery = `SELECT * FROM Pakan_bulan ORDER BY tahun, bulan`;
     const result = await executeQuery(resultQuery, [], [], false);
@@ -169,6 +155,7 @@ async function processMonthlyProductionPakan() {
     throw error;
   }
 }
+
 
 async function getAllPakanMonthly() {
   try {
@@ -184,44 +171,40 @@ async function getAllPakanMonthly() {
 async function createBulkProduksiPakan(dataArray) {
   try {
     // Import sql directly from the Db module without destructuring
-    const sql = require("../Db").sql;
-
+    const sql = require('../Db').sql;
+    
     // Create a new pool connection
     const pool = await sql.connect();
     const transaction = new sql.Transaction(pool);
-
+    
     try {
       // Start transaction
       await transaction.begin();
-
+      
       const results = [];
-
+      
       // Process each item in the array
       for (const data of dataArray) {
         const request = new sql.Request(transaction);
-        request.input("Tanggal", sql.Date, new Date(data.Tanggal));
-        request.input(
-          "Pakan_kg",
-          sql.Decimal(10, 2),
-          parseFloat(data.Pakan_kg)
-        );
-
+        request.input('Tanggal', sql.Date, new Date(data.Tanggal));
+        request.input('Pakan_kg', sql.Decimal(10, 2), parseFloat(data.Pakan_kg));
+        
         const query = `
           INSERT INTO Pakan_hari (Tanggal, Pakan_kg)
           OUTPUT INSERTED.*
           VALUES (@Tanggal, @Pakan_kg)
         `;
-
+        
         const result = await request.query(query);
         results.push(...result.recordset);
       }
-
+      
       // Commit transaction
       await transaction.commit();
-
+      
       // Process monthly data after all inserts
       await processMonthlyProductionPakan();
-
+      
       return results;
     } catch (error) {
       // If any error occurs, rollback the transaction
@@ -242,6 +225,7 @@ async function createBulkProduksiPakan(dataArray) {
   }
 }
 
+
 // Add other CRUD operations as needed
 
 module.exports = {
@@ -251,5 +235,5 @@ module.exports = {
   createProduksiPakan,
   updateProduksiPakan,
   deleteProduksiPakan,
-  createBulkProduksiPakan,
+  createBulkProduksiPakan
 };
