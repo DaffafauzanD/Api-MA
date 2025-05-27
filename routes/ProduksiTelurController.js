@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Produksitelur  = require("../services/ProduksiTelurService");
+const {authMiddleware, adminOnly} = require("../middleware/auth/MiddlewareUser");
 
 // router.get("/Produksi/telur", async (req, res) => {
 //   try {
@@ -40,7 +41,7 @@ const Produksitelur  = require("../services/ProduksiTelurService");
 //   }
 // });
 
-router.get("/Produksi/telur", async (req, res) => {
+router.get("/Produksi/telur", authMiddleware,  adminOnly, async (req, res) => {
   try {
     const data = await Produksitelur.getAllProduksiTelur();
     res.status(200).json({

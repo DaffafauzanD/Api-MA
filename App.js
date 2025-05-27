@@ -7,6 +7,7 @@ const Produksitelur = require("./routes/ProduksiTelurController");
 const Pendapatan = require("./routes/PendapatanController");
 const pakancontroller = require("./routes/PakanController");
 const SmovingAverage = require("./routes/SMovingAverageController");
+const cookieParser = require('cookie-parser'); // Impor cookie-parser
 const { authMiddleware, adminOnly } = require('./middleware/auth/MiddlewareUser');
 
 const authController = require("./routes/UserController");
@@ -17,8 +18,14 @@ const app = express()
 const port = process.env.PORT || 3001;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(cors({
+  origin: 'http://localhost:3000', // Ganti dengan URL frontend Anda
+  credentials: true
+}));
 
-app.use(cors());
+
+
 
 connect()
   .then((connection) => {

@@ -3,6 +3,7 @@ const router = express.Router();
 const ForecastService = require("../services/PakanServices");
 const produksi_telur = require("../model/ProduksiTelurModel");
 const PakanModel = require("../model/PakanModel"); // Assuming you'll create this
+const { authMiddleware, adminOnly } = require("../middleware/auth/MiddlewareUser");
 
 //#region forecast
 
@@ -65,7 +66,7 @@ router.get("/forecast/feed/:field/:window/:periods", async (req, res) => {
 
 //#endregion forecast
 
-router.get("/pakan", async (req, res) => {
+router.get("/pakan", authMiddleware, adminOnly, async (req, res) => {
   try {
     const data = await PakanModel.getAllPakan();
     res.status(200).json({

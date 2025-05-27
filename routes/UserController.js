@@ -36,6 +36,14 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     
     const result = await UserService.login(username, password);
+
+    // Atur token sebagai HTTP-Only cookie
+    res.cookie('authToken', result.token, {
+      httpOnly: true, // Cookie tidak bisa diakses oleh JavaScript sisi klien
+      secure: process.env.NODE_ENV === 'production', // Kirim hanya melalui HTTPS di produksi
+      sameSite: 'Lax', // Atau 'Strict' atau 'None' (jika 'None', 'secure' harus true)
+      maxAge: 24 * 60 * 60 * 1000 // Masa berlaku cookie (misalnya 1 hari, sama dengan token)
+    });
     
     res.status(200).json({
       status: 200,
@@ -76,6 +84,19 @@ router.get('/profile', authMiddleware, async (req, res) => {
       error: error.message
     });
   }
+});
+
+router.post('/logout', (req, res) => {
+  res.clearCookie('authToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax'
+    // Anda juga bisa menambahkan path dan domain jika diset secara spesifik saat pembuatan cookie
+  });
+  res.status(200).json({
+    status: 200,
+    message: 'Logout successful'
+  });
 });
 
 module.exports = router;

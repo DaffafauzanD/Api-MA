@@ -13,6 +13,8 @@ async function getAllPendapatan() {
   }
 }
 
+
+
 module.exports = {
   getAllPendapatan,
 };

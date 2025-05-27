@@ -14,7 +14,7 @@ async function login(username, password) {
   }
   
   // Compare passwords
-  const isMatch = await bcrypt.compare(password, user.password);
+  const isMatch = await bcrypt.compare(password, user.password_hash);
   
   if (!isMatch) {
     throw new Error('Invalid credentials');
@@ -28,7 +28,7 @@ async function login(username, password) {
   );
   
   // Don't return the password
-  const { password: _, ...userWithoutPassword } = user;
+  const { password_hash: _, ...userWithoutPassword } = user;
   
   return {
     user: userWithoutPassword,

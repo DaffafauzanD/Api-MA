@@ -1,5 +1,6 @@
 const {executeQuery, executeTableValuedQuery} = require('../Db');
 
+
 // async function getAllProduksiTelur() {
 //   try {
 //     const query = `
@@ -84,6 +85,109 @@ async function getProduksiTelurById(id) {
   }
 }
 
+
+async function processPendapatanData() {
+  try {
+    // Step 1: Get all monthly production data
+    const monthlyData = await getAllMonthlyProduction();
+    
+    // Define egg price constant (could be moved to a configuration file)
+    const HARGA_TELUR_PER_KG = 22000;
+    
+    // Step 2: Calculate monthly revenue for each month
+    for (const monthData of monthlyData) {
+      // Calculate monthly revenue
+      const pendapatanBulan = monthData.total_telur_kg * HARGA_TELUR_PER_KG;
+      
+      // Check if this month already exists in pendapatan table
+      const checkQuery = `
+        SELECT id FROM pendapatan 
+        WHERE produksi_id = @produksi_id
+      `;
+      const checkResult = await executeQuery(
+        checkQuery, 
+        [monthData.id], 
+        ["produksi_id"], 
+        false
+      );
+      
+      if (checkResult.recordset.length > 0) {
+        // Update existing record
+        const updateQuery = `
+          UPDATE pendapatan SET
+            pendapatan_bulan = @pendapatan_bulan,
+            update_at = GETDATE()
+          WHERE produksi_id = @produksi_id
+        `;
+        
+        await executeQuery(
+          updateQuery, 
+          [pendapatanBulan, monthData.id],
+          ["pendapatan_bulan", "produksi_id"],
+          false
+        );
+      } else {
+        // Insert new record
+        const insertQuery = `
+          INSERT INTO pendapatan 
+            (produksi_id, pendapatan_bulan, created_at, update_at)
+          VALUES (@produksi_id, @pendapatan_bulan, GETDATE(), GETDATE())
+        `;
+        
+        await executeQuery(
+          insertQuery,
+          [monthData.id, pendapatanBulan],
+          ["produksi_id", "pendapatan_bulan"],
+          false
+        );
+      }
+    }
+    
+    // Step 3: Calculate and update quarterly revenue
+    const quartalQuery = `
+      UPDATE p
+      SET p.pendapatan_quartal = (
+        SELECT SUM(p2.pendapatan_bulan)
+        FROM pendapatan p2
+        JOIN produksi_telur_bulan ptb2 ON p2.produksi_id = ptb2.id
+        WHERE YEAR(ptb2.tahun) = YEAR(ptb.tahun)
+        AND ((MONTH(ptb2.bulan)-1) / 3) + 1 = ((MONTH(ptb.bulan)-1) / 3) + 1
+      )
+      FROM pendapatan p
+      JOIN produksi_telur_bulan ptb ON p.produksi_id = ptb.id
+    `;
+    
+    await executeQuery(quartalQuery, [], [], false);
+    
+    // Step 4: Calculate and update yearly revenue
+    const yearlyQuery = `
+      UPDATE p
+      SET p.pendapatan_tahun = (
+        SELECT SUM(p2.pendapatan_bulan)
+        FROM pendapatan p2
+        JOIN produksi_telur_bulan ptb2 ON p2.produksi_id = ptb2.id
+        WHERE YEAR(ptb2.tahun) = YEAR(ptb.tahun)
+      )
+      FROM pendapatan p
+      JOIN produksi_telur_bulan ptb ON p.produksi_id = ptb.id
+    `;
+    
+    await executeQuery(yearlyQuery, [], [], false);
+    
+    // Return the current state of the pendapatan table
+    const resultQuery = `
+      SELECT p.*, ptb.bulan, ptb.tahun 
+      FROM pendapatan p
+      JOIN produksi_telur_bulan ptb ON p.produksi_id = ptb.id
+      ORDER BY ptb.tahun, ptb.bulan
+    `;
+    const result = await executeQuery(resultQuery, [], [], false);
+    return result.recordset;
+  } catch (error) {
+    console.error("Error processing pendapatan data:", error);
+    throw error;
+  }
+}
 
 
 async function createProduksiTelur(data) {
@@ -217,6 +321,7 @@ async function processMonthlyProduction() {
         );
       }
     }
+     await processPendapatanData();
     
     // Return the current state of the monthly table
     const resultQuery = `SELECT * FROM produksi_telur_bulan ORDER BY tahun, bulan`;
