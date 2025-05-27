@@ -3,7 +3,7 @@ const sql = require("mssql");
 const config = {
   server: "Localhost",
   database: "MA_Databases",
-  user: "qq",
+  user: "ta",
   password: "0895YEET!@#$4215",
   options: {
     trustedConnection: true,
