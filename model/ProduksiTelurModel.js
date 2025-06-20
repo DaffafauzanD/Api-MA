@@ -85,6 +85,35 @@ async function getProduksiTelurById(id) {
   }
 }
 
+/**
+ * Get quarterly egg production data
+ * @returns {Array} Quarterly production data
+ */
+async function getQuarterlyProduction() {
+  try {
+    const query = `
+      SELECT 
+        YEAR(Tanggal) AS year,
+        DATEPART(QUARTER, Tanggal) AS quarter,
+        SUM(Telur_kg) AS total_telur_kg,
+        AVG(Telur_kg) AS average_daily_production,
+        COUNT(*) AS days_count,
+        MIN(Tanggal) AS start_date,
+        MAX(Tanggal) AS end_date
+      FROM produksi_telur_hari
+      WHERE Tanggal IS NOT NULL
+      GROUP BY YEAR(Tanggal), DATEPART(QUARTER, Tanggal)
+      ORDER BY year, quarter
+    `;
+    
+    const result = await executeQuery(query, [], [], false);
+    return result.recordset;
+  } catch (error) {
+    console.error("Error fetching quarterly production data:", error);
+    throw error;
+  }
+}
+
 
 async function processPendapatanData() {
   try {
@@ -344,6 +373,30 @@ async function getAllMonthlyProduction() {
   }
 }
 
+async function getWeeklyProduction() {
+  try {
+    const query = `
+      SELECT 
+        DATEPART(WEEK, Tanggal) AS week_number,
+        YEAR(Tanggal) AS year,
+        SUM(Telur_kg) AS total_telur_kg,
+        MIN(Tanggal) AS start_date,
+        MAX(Tanggal) AS end_date
+      FROM produksi_telur_hari
+      WHERE Tanggal IS NOT NULL
+      GROUP BY DATEPART(WEEK, Tanggal), YEAR(Tanggal)
+      ORDER BY year, week_number
+    `;
+    
+    // Use empty arrays for parameters since we don't have any
+    const result = await executeQuery(query, [], [], false);
+    return result.recordset;
+  } catch (error) {
+    console.error("Error fetching weekly production data:", error);
+    throw error;
+  }
+}
+
 async function createBulkProduksiTelur(dataArray) {
   try {
     // Import the sql module directly
@@ -407,5 +460,7 @@ module.exports = {
   createProduksiTelur,
   updateProduksiTelur,
   deleteProduksiTelur,
-  createBulkProduksiTelur
+  createBulkProduksiTelur,
+  getWeeklyProduction,
+  getQuarterlyProduction,
 };

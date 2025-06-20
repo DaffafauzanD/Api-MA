@@ -58,6 +58,27 @@ router.get("/Produksi/telur", authMiddleware,  adminOnly, async (req, res) => {
   }
 });
 
+router.get("/Produksi/telur/Week", authMiddleware,  adminOnly, async (req, res) => {
+  try {
+    console.log("Fetching weekly production data...");
+    const data = await Produksitelur.getWeeklyProduction();
+    console.log("Weekly data retrieved successfully:", data.length, "records");
+    
+    res.status(200).json({
+      status: 200,
+      message: "Weekly production data retrieved successfully",
+      data,
+    });
+  } catch (error) {
+    console.error("Weekly production error:", error);
+    res.status(500).json({
+      status: 500,
+      message: "Failed to retrieve weekly production data",
+      error: error.message,
+    });
+  }
+});
+
 router.post("/Produksi/telur/add", async (req, res) => {
   try {
     const data = await Produksitelur.createProduksiTelur({
@@ -140,6 +161,28 @@ router.get("/Produksi/telur/find/:id", async (req, res) => {
     res.status(500).json({
       status: 500,
       message: "Failed to retrieve data",
+      error: error.message,
+    });
+  }
+});
+
+
+router.get("/Produksi/telur/quarter", async (req, res) => {
+  try {
+    console.log("Fetching quarterly production data...");
+    const data = await Produksitelur.getQuarterlyProduction();
+    console.log("Quarterly data retrieved successfully:", data.length, "records");
+    
+    res.status(200).json({
+      status: 200,
+      message: "Quarterly production data retrieved successfully",
+      data,
+    });
+  } catch (error) {
+    console.error("Quarterly production error:", error);
+    res.status(500).json({
+      status: 500,
+      message: "Failed to retrieve quarterly production data",
       error: error.message,
     });
   }

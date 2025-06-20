@@ -30,6 +30,15 @@ async function createBulkProduksiTelur(dataArray) {
     return await Produksitelur.createBulkProduksiTelur(dataArray);
 }
 
+async function getWeeklyProduction() {
+    return await Produksitelur.getWeeklyProduction();
+}
+
+async function getQuarterlyProduction(){
+    return await Produksitelur.getQuarterlyProduction();
+}
+
+
 module.exports = {
     getAllProduksiTelur,
     getProduksiTelurById,
@@ -38,5 +47,7 @@ module.exports = {
     processMonthlyProduction,
     getAllMonthlyProduction,
     deleteProduksiTelur,
-    createBulkProduksiTelur
+    createBulkProduksiTelur,
+    getWeeklyProduction,
+    getQuarterlyProduction
 };
